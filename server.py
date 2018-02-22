@@ -33,6 +33,27 @@ class StopHandler(tornado.web.RequestHandler):
                 i.stop()
         self.write("stop")
 
+
+txt = ''
+
+class ClientHandler(tornado.web.RequestHandler):
+    def get(self):
+        from tornado import httpclient
+
+        def handle_response(response):
+            if response.error:
+                print("Error: %s" % response.error)
+
+            else:
+                print(response.body)
+                global txt
+                txt = response.body.decode('utf-8')
+
+        http_client = httpclient.AsyncHTTPClient()
+        http_client.fetch("http://www.baidu.com/", handle_response)
+        self.write(txt)
+
+
 if __name__ == "__main__":
     tornado.options.parse_command_line()
     app = tornado.web.Application(handlers=[(r"/", IndexHandler),(r"/s", StopHandler)])
