@@ -1,0 +1,54 @@
+LOAD path dump → Load a database from a file (available since 0.1)
+
+SET key value → Set the string value of a key (available since 0.1)
+
+GET key → Get the value of a key (available since 0.1)
+
+GETALL → Return a list of all keys in database (available since 0.4)
+
+REM key → Delete a key (available since 0.1)
+
+APPEND key more → Add more to a key's value (available since 0.1.3)
+
+LCREATE name → Create a list (available since 0.1)
+
+LADD name value → Add a value to a list (available since 0.1)
+
+LGETALL name → Return all values in a list (available since 0.1)
+
+LEXTEND name seq → Extend a list with a sequence (available since 0.6)
+
+LGET name pos → Return one value in a list (available since 0.1)
+
+LREM name → Remove a list and all of its values (available since 0.1)
+
+LPOP name pos → Remove one value in a list (available since 0.1)
+
+LLEN name → Return the length of a list (available since 0.6)
+
+LAPPEND name pos more → Add more to a value in a list (available since 0.1.3)
+
+DCREATE name → Create a dict (available since 0.2.2)
+
+DADD name pair → Add a key-value pair to a dict, "pair" is a tuple (available since 0.2.2)
+
+DGETALL name → Return all key-value pairs from a dict (available since 0.2.2)
+
+DGET name key → Return the value for a key in a dict (available since 0.2.2)
+
+DKEYS name → Return all the keys for a dict (available since 0.6)
+
+DVALS name → Return all the values for a dict (available) since 0.6)
+
+DEXISTS name key → Determine if a key exists (available since 0.6)
+
+DREM name → Remove a dict and all of its pairs (available since 0.2.2)
+
+DPOP name key → Remove one key-value in a dict (available since 0.2.2)
+
+DELDB → Delete everything from the database (available since 0.2.1)
+
+DUMP → Save the database from memory to a file specified in LOAD (available since 0.3)
+
+Suggestions
+If you would like to suggest a command, you can create an issue on Bitbucket.

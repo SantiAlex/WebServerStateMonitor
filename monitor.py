@@ -1,10 +1,10 @@
 import pickledb
-
+from tornado import httpclient
 
 class Monitor(object):
     def __init__(self):
         self.db = pickledb.load('data', False)
-        self.db.dump()
+        # self.db.dump()
 
         self.__start_all__()
 
@@ -26,29 +26,32 @@ class Monitor(object):
     def __restart_all__(self):
         pass
 
-    def add(self, json):
+    def write(self, json):
         if validate(json):
-            if not self.get(json.key):
-                self.db.set(json.key, json.value)
-                self.db.dump()
-                self.__start__(json.key)
-                return True
+            if self.db.get(json.key):
+                self.__stop__(json.key)
+
+            self.db.set(json.key, json.value)
+            self.db.dump()
+            self.__start__(json.key)
+            return True
+
         return False
 
     def delete(self, name):
-        if name in self.tasks:
+        if self.db.get(name):
             self.__stop__(name)
+            self.db.rem(name)
             self.db.dump()
         pass
 
-    def update(self, json):
-        if validate(json):
-            pass
-        pass
-
     def list(self):
+        return self.db.dgetall()
         pass
 
+    def __client__(self,request):
+        
+        pass
 
 monitor = Monitor()
 
