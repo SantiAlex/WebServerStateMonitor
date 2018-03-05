@@ -1,6 +1,56 @@
 import pickledb
 from tornado import httpclient
 
+
+class Task():
+
+    schema = {
+        'type':'object',
+        'properties':{
+            'project':{'type':'string'},
+            'auth': {
+                # 'type': 'object',
+                'oneOf':[
+                    {
+                        'type':'object',
+                        "required": ["url", "method"],
+                        'properties': {
+                            'url': {'type': 'string'},
+                            'method':{
+                                'type':'string',
+                                'method':{
+                                    'type':'string',
+                                    'enum':['get'],
+                                },
+                            },
+                        },
+                    },
+                    {
+                        'type': 'object',
+                        'properties': {
+                            'url': {'type': 'string'},
+                            'method':{'type':'string',
+                                      'enum':['post'],
+                                      },
+                            'body':{
+                                'type':'object',
+                                'properties':{
+                                    'key':{'type':'string'},
+                                    'value':{'type':'string'},
+                                },
+                            }
+                        },
+                    },
+                ]
+
+            }
+
+        }
+    }
+    def __init__(self,json):
+        pass
+
+
 class Monitor(object):
     def __init__(self):
         self.db = pickledb.load('data', False)
@@ -50,7 +100,7 @@ class Monitor(object):
         pass
 
     def __client__(self,request):
-        
+
         pass
 
 monitor = Monitor()
