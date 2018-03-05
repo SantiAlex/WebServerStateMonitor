@@ -3,40 +3,48 @@ from tornado import httpclient
 
 
 class Task():
-
     schema = {
-        'type':'object',
-        'properties':{
-            'project':{'type':'string'},
+        'type': 'object',
+        'required': ['project'],
+        "additionalProperties": False,
+        'properties': {
+            'project': {
+                'type': 'string',
+                'format': 'uri',
+            },
             'auth': {
                 # 'type': 'object',
-                'oneOf':[
+                'oneOf': [
                     {
-                        'type':'object',
-                        "required": ["url", "method"],
+                        'type': 'object',
+                        'required': ['url', 'method'],
                         'properties': {
-                            'url': {'type': 'string'},
-                            'method':{
-                                'type':'string',
-                                'method':{
-                                    'type':'string',
-                                    'enum':['get'],
+                            'url': {
+                                'type': 'string',
+                                'format': 'uri',
+                            },
+                            'method': {
+                                'type': 'string',
+                                'method': {
+                                    'type': 'string',
+                                    'enum': ['get'],
                                 },
                             },
                         },
                     },
                     {
                         'type': 'object',
+                        'required': ['url', 'method', 'body'],
                         'properties': {
                             'url': {'type': 'string'},
-                            'method':{'type':'string',
-                                      'enum':['post'],
-                                      },
-                            'body':{
-                                'type':'object',
-                                'properties':{
-                                    'key':{'type':'string'},
-                                    'value':{'type':'string'},
+                            'method': {'type': 'string',
+                                       'enum': ['post'],
+                                       },
+                            'body': {
+                                'type': 'object',
+                                'properties': {
+                                    'key': {'type': 'string'},
+                                    'value': {'type': 'string'},
                                 },
                             }
                         },
@@ -47,7 +55,8 @@ class Task():
 
         }
     }
-    def __init__(self,json):
+
+    def __init__(self, json):
         pass
 
 
@@ -99,9 +108,10 @@ class Monitor(object):
         return self.db.dgetall()
         pass
 
-    def __client__(self,request):
+    def __client__(self, request):
 
         pass
+
 
 monitor = Monitor()
 
