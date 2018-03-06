@@ -1,4 +1,5 @@
 import pickledb
+import jsonschema
 from tornado import httpclient
 
 
@@ -55,7 +56,9 @@ class Task():
 
         }
     }
-
+    def __new__(cls, json):
+        if jsonschema.validate(json,Task.schema,format_checker=jsonschema.FormatChecker()):
+            return super(Task,cls).__new__(cls)
     def __init__(self, json):
         pass
 
