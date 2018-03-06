@@ -9,6 +9,7 @@ schema = {
         'project': {
             'type': 'string',
             'format': 'email',
+            'pattern': '^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$',
         },
         'auth': {
             # 'type': 'object',
@@ -23,10 +24,8 @@ schema = {
                         },
                         'method': {
                             'type': 'string',
-                            'method': {
-                                'type': 'string',
-                                'enum': ['get'],
-                            },
+                            'enum': ['get', 'aaa'],
+
                         },
                     },
                 },
@@ -55,9 +54,13 @@ schema = {
 }
 
 json = {
-    'project': '@www.a你啊哈达哦sd||\\++!@#!@#>><<><>>>>,.,....,1.25151229879310930-'
+    'project': '12312412@qqc.c',
+    'auth': {
+        'url': 'http://1.1.1.1',
+        'method': 'got',
+    },
 }
 validate(json, schema, format_checker=FormatChecker())
 print(isinstance('asd', str))
 
-validate("-12", {"format": "date-time"}, format_checker=FormatChecker(), )
+# validate("-12", {"format": "date-time"}, format_checker=FormatChecker(), )
