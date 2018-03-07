@@ -57,10 +57,10 @@ json = {
     'project': '12312412@qqc.c',
     'auth': {
         'url': 'http://1.1.1.1',
-        'method': 'got',
+        'method': 'get',
     },
 }
 validate(json, schema, format_checker=FormatChecker())
-print(isinstance('asd', str))
+# print(isinstance('asd', str))
 
 # validate("-12", {"format": "date-time"}, format_checker=FormatChecker(), )
