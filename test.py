@@ -3,7 +3,7 @@ from jsonschema import *
 
 schema = {
     'type': 'object',
-    'required': ['project'],
+    'required': ['project', 'item'],
     "additionalProperties": False,
     'properties': {
         'project': {
@@ -21,6 +21,7 @@ schema = {
                         'url': {
                             'type': 'string',
                             'format': 'uri',
+                            # 'pattern': '/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/',
                         },
                         'method': {
                             'type': 'string',
@@ -48,19 +49,77 @@ schema = {
                 },
             ]
 
-        }
+        },
+        'item': {
+            'type': 'array',
+            "items": {
+                'oneOf': [
+                    {
+                        'type': 'object',
+                        'required': ['url', 'method'],
+                        'properties': {
+                            'url': {
+                                'type': 'string',
+                                'format': 'uri',
+                            },
+                            'method': {
+                                'type': 'string',
+                                'enum': ['get'],
+
+                            },
+                        },
+                    },
+                    {
+                        'type': 'object',
+                        'required': ['url', 'method', 'body'],
+                        'properties': {
+                            'url': {
+                                'type': 'string',
+                                'format': 'uri',
+                            },
+                            'method': {
+                                'type': 'string',
+                                'enum': ['post'],
+                            },
+                            'body': {
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'required': ['key', 'value'],
+                                    'properties': {
+                                        'key': {'type': 'string'},
+                                        'value': {'type': 'string'},
+                                    }
+
+                                },
+                            }
+                        },
+                    },
+                ]
+            },
+        },
 
     }
 }
 
 json = {
-    'project': '12312412@qqc.c',
+    'project': '231你好2412@qqc.c',
     'auth': {
-        'url': 'http://1.1.1.1',
+        'url': 'https://1.1.1.1',
         'method': 'get',
     },
+    'item': [
+        {'url': 'https://1.1.1.1',
+         'method': 'get', },
+        {'url': 'https://1.1.1.1',
+         'method': 'post',
+         'body': [{'1key': 'sad', 'value': 'sda'}, {'key': 'sad', 'value': 'sda'}]}
+    ]
 }
-validate(json, schema, format_checker=FormatChecker())
+try:
+    validate(json, schema, format_checker=FormatChecker())
+except Exception as e:
+    print(e)
 # print(isinstance('asd', str))
 
 # validate("-12", {"format": "date-time"}, format_checker=FormatChecker(), )

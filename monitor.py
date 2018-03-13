@@ -3,10 +3,10 @@ import jsonschema
 from tornado import httpclient
 
 
-class Task():
+class Task(object):
     schema = {
         'type': 'object',
-        'required': ['project'],
+        'required': ['project', 'item', 'interval'],
         "additionalProperties": False,
         'properties': {
             'project': {
@@ -14,7 +14,6 @@ class Task():
                 'format': 'uri',
             },
             'auth': {
-                # 'type': 'object',
                 'oneOf': [
                     {
                         'type': 'object',
@@ -26,10 +25,8 @@ class Task():
                             },
                             'method': {
                                 'type': 'string',
-                                'method': {
-                                    'type': 'string',
-                                    'enum': ['get'],
-                                },
+                                'enum': ['get'],
+
                             },
                         },
                     },
@@ -37,10 +34,14 @@ class Task():
                         'type': 'object',
                         'required': ['url', 'method', 'body'],
                         'properties': {
-                            'url': {'type': 'string'},
-                            'method': {'type': 'string',
-                                       'enum': ['post'],
-                                       },
+                            'url': {
+                                'type': 'string',
+                                'format': 'uri',
+                            },
+                            'method': {
+                                'type': 'string',
+                                'enum': ['post'],
+                            },
                             'body': {
                                 'type': 'object',
                                 'properties': {
@@ -52,13 +53,65 @@ class Task():
                     },
                 ]
 
-            }
+            },
+            'item': {
+                'type': 'array',
+                "items": {
+                    'oneOf': [
+                        {
+                            'type': 'object',
+                            'required': ['url', 'method'],
+                            'properties': {
+                                'url': {
+                                    'type': 'string',
+                                    'format': 'uri',
+                                },
+                                'method': {
+                                    'type': 'string',
+                                    'enum': ['get'],
+
+                                },
+                            },
+                        },
+                        {
+                            'type': 'object',
+                            'required': ['url', 'method', 'body'],
+                            'properties': {
+                                'url': {
+                                    'type': 'string',
+                                    'format': 'uri',
+                                },
+                                'method': {
+                                    'type': 'string',
+                                    'enum': ['post'],
+                                },
+                                'body': {
+                                    'type': 'array',
+                                    'items': {
+                                        'type': 'object',
+                                        'required': ['key', 'value'],
+                                        'properties': {
+                                            'key': {'type': 'string'},
+                                            'value': {'type': 'string'},
+                                        }
+                                    },
+                                }
+                            },
+                        },
+                    ]
+                },
+            },
+            'interval': {
+                'type': 'number',
+            },
 
         }
     }
+
     def __new__(cls, json):
-        if jsonschema.validate(json,Task.schema,format_checker=jsonschema.FormatChecker()):
-            return super(Task,cls).__new__(cls)
+        if jsonschema.validate(json, Task.schema, format_checker=jsonschema.FormatChecker()):
+            return super(Task, cls).__new__(cls)
+
     def __init__(self, json):
         pass
 
