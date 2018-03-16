@@ -1,5 +1,6 @@
 import pickledb
 import jsonschema
+import json
 from tornado import httpclient
 
 
@@ -108,11 +109,19 @@ class Task(object):
         }
     }
 
-    def __new__(cls, json):
+    def __new__(cls, jsonData):
         if jsonschema.validate(json, Task.schema, format_checker=jsonschema.FormatChecker()):
             return super(Task, cls).__new__(cls)
 
-    def __init__(self, json):
+    def __init__(self, jsonData):
+        jsonData = json.dumps(jsonData)
+        self.project = jsonData['project']
+        self.auth = jsonData.get('auth')
+        if self.auth:
+            self.auth_method = self.auth['method']
+            self.auth_url = self.auth['url']
+            if self.auth_method == 'post':
+                self.auth_body = 
         pass
 
 
