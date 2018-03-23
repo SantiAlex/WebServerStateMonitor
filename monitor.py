@@ -44,10 +44,14 @@ class Task(object):
                                 'enum': ['post'],
                             },
                             'body': {
-                                'type': 'object',
-                                'properties': {
-                                    'key': {'type': 'string'},
-                                    'value': {'type': 'string'},
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'required': ['key', 'value'],
+                                    'properties': {
+                                        'key': {'type': 'string'},
+                                        'value': {'type': 'string'},
+                                    }
                                 },
                             }
                         },
@@ -120,9 +124,26 @@ class Task(object):
         if self.auth:
             self.auth_method = self.auth['method']
             self.auth_url = self.auth['url']
+            self.auth_body = []
             if self.auth_method == 'post':
-                self.auth_body = 
+                for i in self.auth['body']:
+                    self.auth_body.append({i['key']: i['value']})
+        self.items = []
+        for i in jsonData.get('items'):
+            self.items.append(RequestUrl(i))
+        self.interval = jsonData['interval']
         pass
+
+
+class RequestUrl(object):
+
+    def __init__(self, item):
+        self.url = item['url']
+        self.method = item['method']
+        self.body = []
+        if self.method == 'post':
+            for i in item['body']:
+                self.body.append({i['key']: i['value']})
 
 
 class Monitor(object):
