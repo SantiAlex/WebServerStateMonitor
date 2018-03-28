@@ -5,15 +5,19 @@ import tornado.web
 import monitor
 
 from tornado.options import define, options
+
 define("port", default=8000, help="run on the given port", type=int)
 
 task_list = []
 
+
 def task():
     print("task...")
 
+
 def task1():
     print(monitor.monitor)
+
 
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
@@ -23,8 +27,9 @@ class IndexHandler(tornado.web.RequestHandler):
         task_list.append(t2)
         for i in task_list:
             i.start()
-        # tornado.ioloop.IOLoop.instance().start()
-        # self.write()
+            # tornado.ioloop.IOLoop.instance().start()
+            # self.write()
+
 
 class StopHandler(tornado.web.RequestHandler):
     def get(self):
@@ -36,6 +41,7 @@ class StopHandler(tornado.web.RequestHandler):
 
 
 txt = ''
+
 
 class ClientHandler(tornado.web.RequestHandler):
     def get(self):
@@ -57,8 +63,16 @@ class ClientHandler(tornado.web.RequestHandler):
 
 if __name__ == "__main__":
     tornado.options.parse_command_line()
-    app = tornado.web.Application(handlers=[(r"/", IndexHandler),(r"/s", StopHandler)])
+    app = tornado.web.Application(
+        handlers=[
+            (r"/", IndexHandler),
+            (r"/s", StopHandler),
+            (r"/tasks", ListHandler),
+            (r"/tasks/add", AddHandler),
+            (r"/tasks/(?P<task>\d*)", TaskHandler),
+
+        ]
+    )
     http_server = tornado.httpserver.HTTPServer(app)
     http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
-
