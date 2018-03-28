@@ -60,6 +60,29 @@ class ClientHandler(tornado.web.RequestHandler):
         http_client.fetch("http://www.baidu.com/", handle_response)
         self.write(txt)
 
+class ListHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write(monitor.list())
+
+class AddHandler(tornado.web.RequestHandler):
+    def post(self):
+        param = self.request.body.decode('utf-8')
+        monitor.add(param)
+        self.write(monitor.list())
+
+class TaskHandler(tornado.web.RequestHandler):
+    def get(self, task):
+        self.write(monitor.get(task))
+
+    def post(self, task):
+        param = self.request.body.decode('utf-8')
+        monitor.update(task,param)
+        self.write(monitor.get(task))
+
+    def delete(self, task):
+        monitor.delete(task)
+        self.write(monitor.list())
+
 
 if __name__ == "__main__":
     tornado.options.parse_command_line()
