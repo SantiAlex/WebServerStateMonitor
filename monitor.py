@@ -118,9 +118,9 @@ class Task(object):
             return super(Task, cls).__new__(cls)
 
     def __init__(self, jsonData):
-        jsonData = json.dumps(jsonData)
-        self.project = jsonData['project']
-        self.auth = jsonData.get('auth')
+        self.jsonData = json.dumps(jsonData)
+        self.project = self.jsonData['project']
+        self.auth = self.jsonData.get('auth')
         if self.auth:
             self.auth_method = self.auth['method']
             self.auth_url = self.auth['url']
@@ -129,9 +129,11 @@ class Task(object):
                 for i in self.auth['body']:
                     self.auth_body.append({i['key']: i['value']})
         self.items = []
-        for i in jsonData.get('items'):
+        for i in self.jsonData.get('items'):
             self.items.append(RequestUrl(i))
-        self.interval = jsonData['interval']
+        self.interval = self.jsonData['interval']
+
+        self.is_running = True
         pass
 
     def start(self):
@@ -153,7 +155,8 @@ class Monitor(object):
     def __init__(self):
         self.db = pickledb.load('data', False)
         # self.db.dump()
-
+        self.tasks_list = []
+        self.tasks = {}
         self.__start_all__()
 
     def __start__(self, name):
@@ -194,11 +197,11 @@ class Monitor(object):
         pass
 
     def list(self):
-        return self.db.dgetall()
+        return self.tasks_list
         pass
 
-    def __client__(self, request):
-
+    def get(self, task):
+        retrun self.tasks[task]
         pass
 
 
