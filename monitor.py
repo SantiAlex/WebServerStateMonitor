@@ -1,6 +1,7 @@
 import pickledb
 import jsonschema
 import json
+import time, hashlib
 from tornado import httpclient
 
 
@@ -139,9 +140,7 @@ class Task(object):
     def start(self):
 
 
-
 class RequestUrl(object):
-
     def __init__(self, item):
         self.url = item['url']
         self.method = item['method']
@@ -177,23 +176,11 @@ class Monitor(object):
     def __restart_all__(self):
         pass
 
-    def write(self, json):
-        if validate(json):
-            if self.db.get(json.key):
-                self.__stop__(json.key)
-
-            self.db.set(json.key, json.value)
-            self.db.dump()
-            self.__start__(json.key)
-            return True
-
-        return False
+   
 
     def delete(self, name):
-        if self.db.get(name):
-            self.__stop__(name)
-            self.db.rem(name)
-            self.db.dump()
+        self.tasks.pop(task)
+        self.tasks_list.remove(task)
         pass
 
     def list(self):
@@ -201,8 +188,18 @@ class Monitor(object):
         pass
 
     def get(self, task):
-        retrun self.tasks[task]
+        retrun
+        self.tasks[task]
         pass
+
+    def add(self, data):
+        task = Task(data)
+        t = hashlib.md5(str(time.time()).encode()).hexdigest()
+        self.tasks[t] = task
+        self.tasks_list.append(t)
+
+    def update(self, task, data):
+        self.tasks[task] = Task(data)
 
 
 monitor = Monitor()
