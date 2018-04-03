@@ -50,7 +50,7 @@ schema = {
             ]
 
         },
-        'item': {
+        'items': {
             'type': 'array',
             "items": {
                 'oneOf': [

@@ -13,7 +13,7 @@ class Task(object):
         'properties': {
             'project': {
                 'type': 'string',
-                'format': 'uri',
+
             },
             'auth': {
                 'oneOf': [
@@ -114,14 +114,21 @@ class Task(object):
         }
     }
 
-    def __new__(cls, jsonData):
-        if jsonschema.validate(json, Task.schema, format_checker=jsonschema.FormatChecker()):
-            return super(Task, cls).__new__(cls)
+    # def __new__(cls, jsonData):
+    #     try:
+    #         if jsonschema.validate(json, Task.schema, format_checker=jsonschema.FormatChecker()):
+    #             return super(Task, cls, jsonData).__new__(cls, jsonData)
+    #     except Exception as e:
+    #         # print(e)
+    #         pass
 
     def __init__(self, jsonData):
-        self.jsonData = json.dumps(jsonData)
-        self.project = self.jsonData['project']
-        self.auth = self.jsonData.get('auth')
+        print('create a new instance~')
+        self.json_data = jsonData
+        self.structured_data = json.loads(jsonData)
+        print(self.structured_data)
+        self.project = self.structured_data['project']
+        self.auth = self.structured_data.get('auth')
         if self.auth:
             self.auth_method = self.auth['method']
             self.auth_url = self.auth['url']
@@ -130,14 +137,15 @@ class Task(object):
                 for i in self.auth['body']:
                     self.auth_body.append({i['key']: i['value']})
         self.items = []
-        for i in self.jsonData.get('items'):
+        for i in self.structured_data.get('items'):
             self.items.append(RequestUrl(i))
-        self.interval = self.jsonData['interval']
+        self.interval = self.structured_data['interval']
 
         self.is_running = True
         pass
 
     def start(self):
+        pass
 
 
 class RequestUrl(object):
@@ -176,27 +184,27 @@ class Monitor(object):
     def __restart_all__(self):
         pass
 
-   
-
     def delete(self, name):
         self.tasks.pop(task)
         self.tasks_list.remove(task)
         pass
 
     def list(self):
-        return self.tasks_list
+        return json.dumps(self.tasks_list)
         pass
 
     def get(self, task):
-        retrun
-        self.tasks[task]
+        return self.tasks[task].json_data
+
         pass
 
     def add(self, data):
         task = Task(data)
+        print(task)
         t = hashlib.md5(str(time.time()).encode()).hexdigest()
         self.tasks[t] = task
         self.tasks_list.append(t)
+        print(task, self.tasks)
 
     def update(self, task, data):
         self.tasks[task] = Task(data)

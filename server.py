@@ -9,7 +9,7 @@ from tornado.options import define, options
 define("port", default=8000, help="run on the given port", type=int)
 
 task_list = []
-
+# monitor = monitor.monitor
 
 def task():
     print("task...")
@@ -62,26 +62,26 @@ class ClientHandler(tornado.web.RequestHandler):
 
 class ListHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write(monitor.list())
+        self.write(monitor.monitor.list())
 
 class AddHandler(tornado.web.RequestHandler):
     def post(self):
         param = self.request.body.decode('utf-8')
-        monitor.add(param)
-        self.write(monitor.list())
+        monitor.monitor.add(param)
+        self.write(monitor.monitor.list())
 
 class TaskHandler(tornado.web.RequestHandler):
     def get(self, task):
-        self.write(monitor.get(task))
+        self.write(monitor.monitor.get(task))
 
     def post(self, task):
         param = self.request.body.decode('utf-8')
-        monitor.update(task,param)
-        self.write(monitor.get(task))
+        monitor.monitor.update(task, param)
+        self.write(monitor.monitor.get(task))
 
     def delete(self, task):
-        monitor.delete(task)
-        self.write(monitor.list())
+        monitor.monitor.delete(task)
+        self.write(monitor.monitor.list())
 
 
 if __name__ == "__main__":
@@ -92,7 +92,7 @@ if __name__ == "__main__":
             (r"/s", StopHandler),
             (r"/tasks", ListHandler),
             (r"/tasks/add", AddHandler),
-            (r"/tasks/(?P<task>\d*)", TaskHandler),
+            (r"/tasks/(?P<task>[0-9a-z]*)", TaskHandler),
 
         ]
     )
