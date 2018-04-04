@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Console</title>
+    <script src="/app/vue.js"></script>
+</head>
+<body>
+<div id="app">
+    {{ message }}
+</div>
+</body>
+</html>
+
+<script>
+    var cloneObj = function(obj){
+        var str, newobj = obj.constructor === Array ? [] : {};
+        if(typeof obj !== 'object'){
+            return;
+        } else if(window.JSON){
+            str = JSON.stringify(obj), //系列化对象
+            newobj = JSON.parse(str); //还原
+        } else {
+            for(var i in obj){
+                newobj[i] = typeof obj[i] === 'object' ?
+                cloneObj(obj[i]) : obj[i];
+            }
+        }
+        return newobj;
+    };
+    var app = new Vue({
+        el: '#app',
+        data: {
+            message:'',
+        },
+        methods: {
+            addTmp: function(){
+                this.showTemplate=true
+                this.titleEditable=true
+            },
+
+        },
+        created(){
+            fetch('/tasks')
+                .then(response => response.json())
+                .then(json=>{
+                    this.message = json
+
+                    <!--console.log(JSON.stringify(json))-->
+                }),
+                
+        }
+    })
+
+</script>

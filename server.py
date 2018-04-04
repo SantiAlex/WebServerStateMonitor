@@ -3,12 +3,15 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 import monitor
+import os
 
 from tornado.options import define, options
 
 define("port", default=8000, help="run on the given port", type=int)
 
 task_list = []
+
+
 # monitor = monitor.monitor
 
 def task():
@@ -60,15 +63,18 @@ class ClientHandler(tornado.web.RequestHandler):
         http_client.fetch("http://www.baidu.com/", handle_response)
         self.write(txt)
 
+
 class ListHandler(tornado.web.RequestHandler):
     def get(self):
         self.write(monitor.monitor.list())
+
 
 class AddHandler(tornado.web.RequestHandler):
     def post(self):
         param = self.request.body.decode('utf-8')
         monitor.monitor.add(param)
         self.write(monitor.monitor.list())
+
 
 class TaskHandler(tornado.web.RequestHandler):
     def get(self, task):
@@ -94,7 +100,9 @@ if __name__ == "__main__":
             (r"/tasks/add", AddHandler),
             (r"/tasks/(?P<task>[0-9a-z]*)", TaskHandler),
 
-        ]
+        ],
+        static_path=os.path.join(os.path.dirname(__file__), "app"),
+        static_url_prefix="/app/",
     )
     http_server = tornado.httpserver.HTTPServer(app)
     http_server.listen(options.port)
