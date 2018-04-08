@@ -7,7 +7,38 @@
 </head>
 <body>
 <div id="app">
-    {{ message }}
+    {{ tasks }}
+    <ul v-for="task in tasks">
+        <li @click.stop="getTask(task.hash)">
+            
+            {{task.name}}
+            <br>
+            Project:<input type='input' v-model='onFocusTask.project'>
+            <br>
+            Interval:<input type='input' v-model='onFocusTask.interval'>
+            <br>
+            Items:
+                <ul v-for='item in onFocusTask.items'>
+                    <li>
+                        url:<input v-model='item.url'>
+                        <br>
+                        method:<input v-model='item.method'>
+                        <br>
+                        <div v-if='item.body'>
+                            body:
+                            <ul v-for='kv in item.body'>
+
+                            <li>
+                                {{kv.key}}:{{kv.value}}
+                            </li>
+
+                        </ul>
+                        </div>
+                        
+                    </li>
+                </ul>
+        </li>
+    </ul>
 </div>
 </body>
 </html>
@@ -31,12 +62,22 @@
     var app = new Vue({
         el: '#app',
         data: {
-            message:'',
+            tasks:'',
+            task:'',
+            onFocusTask:'',
         },
         methods: {
             addTmp: function(){
                 this.showTemplate=true
                 this.titleEditable=true
+            },
+            getTask: function(hash){
+                fetch('/tasks/'+hash)
+                .then(response => response.json())
+                .then(json=>{
+                    this.onFocusTask = json
+                    <!--console.log(JSON.stringify(json))-->
+                })
             },
 
         },
@@ -44,11 +85,9 @@
             fetch('/tasks')
                 .then(response => response.json())
                 .then(json=>{
-                    this.message = json
-
+                    this.tasks = json
                     <!--console.log(JSON.stringify(json))-->
-                }),
-                
+                })
         }
     })
 

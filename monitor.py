@@ -8,7 +8,7 @@ from tornado import httpclient
 class Task(object):
     schema = {
         'type': 'object',
-        'required': ['project', 'item', 'interval'],
+        'required': ['project', 'items', 'interval'],
         "additionalProperties": False,
         'properties': {
             'project': {
@@ -60,7 +60,7 @@ class Task(object):
                 ]
 
             },
-            'item': {
+            'items': {
                 'type': 'array',
                 "items": {
                     'oneOf': [
@@ -184,13 +184,17 @@ class Monitor(object):
     def __restart_all__(self):
         pass
 
-    def delete(self, name):
+    def delete(self, task):
         self.tasks.pop(task)
         self.tasks_list.remove(task)
         pass
 
     def list(self):
-        return json.dumps(self.tasks_list)
+        l = []
+        for i in self.tasks_list:
+            l.append({"hash": i,
+                      "name":self.tasks[i].project})
+        return (json.dumps(l))
         pass
 
     def get(self, task):
