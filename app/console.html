@@ -9,34 +9,51 @@
 <div id="app">
     {{ tasks }}
     <ul v-for="task in tasks">
-        <li @click.stop="getTask(task.hash)">
-            
-            {{task.name}}
-            <br>
-            Project:<input type='input' v-model='onFocusTask.project'>
-            <br>
-            Interval:<input type='input' v-model='onFocusTask.interval'>
-            <br>
-            Items:
+        <li>
+            <div @click.stop="getTask(task.hash)">
+                {{task.name}}
+            </div>
+            <div v-if="onFocusTask.project==task.name">
+
+                <br>
+                Project:<input type='input' v-model='onFocusTask.project'>
+                <br>
+                Interval:<input type='input' v-model='onFocusTask.interval'>
+                <br>
+                Items:
                 <ul v-for='item in onFocusTask.items'>
                     <li>
                         url:<input v-model='item.url'>
                         <br>
-                        method:<input v-model='item.method'>
+                        method:
+                        <select v-model="item.method">
+                            <option>get</option>
+                            <option>post</option>
+                        </select>
                         <br>
-                        <div v-if='item.body'>
+                        <div v-if='item.method=="post"'>
                             body:
                             <ul v-for='kv in item.body'>
 
-                            <li>
-                                {{kv.key}}:{{kv.value}}
-                            </li>
+                                <li>
+                                    key:
+                                    <input v-model="kv.key">
+                                    value:
+                                    <input v-model="kv.value">
 
-                        </ul>
+                                </li>
+
+                            </ul>
+                            <ul>
+                                <li @click.stop="addKV(item)">+</li>
+                            </ul>
                         </div>
-                        
+
                     </li>
                 </ul>
+                <button @click.stop="save()">save</button>
+            </div>
+
         </li>
     </ul>
 </div>
@@ -63,8 +80,9 @@
         el: '#app',
         data: {
             tasks:'',
-            task:'',
+
             onFocusTask:'',
+            onFocusTaskHash:'',
         },
         methods: {
             addTmp: function(){
@@ -76,9 +94,24 @@
                 .then(response => response.json())
                 .then(json=>{
                     this.onFocusTask = json
+                    this.onFocusTaskHash = hash
                     <!--console.log(JSON.stringify(json))-->
                 })
             },
+            addKV: function(item){
+                item.body.push({"key":"","value":""})
+            },
+            save: function(){
+                fetch('/tasks/'+this.onFocusTaskHash, {
+                    method: 'post',
+                    body: JSON.stringify(this.onFocusTask)
+                  })
+                  .then(response => response.json())
+                  .then(json=>{
+
+                    <!--console.log(JSON.stringify(json))-->
+                  });
+            }
 
         },
         created(){
@@ -90,5 +123,6 @@
                 })
         }
     })
+
 
 </script>

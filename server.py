@@ -78,6 +78,7 @@ class AddHandler(tornado.web.RequestHandler):
 
 class TaskHandler(tornado.web.RequestHandler):
     def get(self, task):
+        self.set_header("Content-Type", "application/json")
         self.write(monitor.monitor.get(task))
 
     def post(self, task):
