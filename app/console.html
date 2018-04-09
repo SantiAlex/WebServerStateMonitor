@@ -4,10 +4,22 @@
     <meta charset="UTF-8">
     <title>Console</title>
     <script src="/app/vue.js"></script>
+    <link rel="stylesheet" type="text/css" href="/app/main.css">
 </head>
 <body>
 <div id="app">
     {{ tasks }}
+
+    <button @click.stop="addNew()">新建</button>
+    <button id="show-modal" @click="showModal = true">Show Modal</button>
+    <!-- use the modal component, pass in the prop -->
+    <modal v-if="showModal" @close="showModal = false">
+        <!--
+          you can use custom content here to overwrite
+          default content
+        -->
+        <h3 slot="header">custom header</h3>
+    </modal>
     <ul v-for="task in tasks">
         <li>
             <div @click.stop="getTask(task.hash)">
@@ -76,6 +88,9 @@
         }
         return newobj;
     };
+    Vue.component('modal', {
+        template: '#modal-template'
+    });
     var app = new Vue({
         el: '#app',
         data: {
@@ -83,11 +98,32 @@
 
             onFocusTask:'',
             onFocusTaskHash:'',
+            newTask:'',
+            showNewPage: false,
+            showModal: false,
         },
         methods: {
-            addTmp: function(){
-                this.showTemplate=true
-                this.titleEditable=true
+            addNew: function(){
+                this.newTask = {
+                    "project": "",
+                    "is_running": true,
+                    "auth": {
+                        "method": "post",
+                        "url": "",
+                        "body": [
+                            {"key":"","value":""}
+                        ]
+                    },
+                    "items":[
+                        {
+                            "url":"",
+                            "method":"get",
+                        }
+                    ]
+                };
+
+                this.showNewPage = true
+
             },
             getTask: function(hash){
                 fetch('/tasks/'+hash)
@@ -99,7 +135,12 @@
                 })
             },
             addKV: function(item){
-                item.body.push({"key":"","value":""})
+                if(item.hasOwnProperty('body')){
+                    item.body.push({"key":"","value":""})
+                }else{
+                    item.body=[{"key":"","value":""}]
+                }
+
             },
             save: function(){
                 fetch('/tasks/'+this.onFocusTaskHash, {
@@ -125,4 +166,41 @@
     })
 
 
+
+
+
+</script>
+<script type="text/x-template" id="modal-template">
+    <transition name="modal">
+        <div class="modal-mask">
+            <div class="modal-wrapper">
+                <div class="modal-container">
+
+                    <div class="modal-header">
+                        <slot name="header">
+                            default header
+                        </slot>
+                    </div>
+
+                    <div class="modal-body">
+                        <slot name="body">
+                            default body
+                        </slot>
+                    </div>
+
+                    <div class="modal-footer">
+                        <slot name="footer">
+                            default footer
+                            <button class="modal-default-button" @click="$emit('close')">
+                                OK
+                            </button>
+                            <button class="modal-default-button" @click="$emit('save')">
+                                SAVE
+                            </button>
+                        </slot>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </transition>
 </script>
