@@ -13,7 +13,6 @@ class Task(object):
         'properties': {
             'project': {
                 'type': 'string',
-
             },
             'auth': {
                 'oneOf': [
@@ -62,7 +61,7 @@ class Task(object):
             },
             'items': {
                 'type': 'array',
-                "items": {
+                "items": [{
                     'oneOf': [
                         {
                             'type': 'object',
@@ -105,43 +104,42 @@ class Task(object):
                             },
                         },
                     ]
-                },
+                }],
             },
             'interval': {
                 'type': 'number',
+            },
+            'is_running': {
+                'type': 'boolean'
             },
 
         }
     }
 
-    # def __new__(cls, jsonData):
-    #     try:
-    #         if jsonschema.validate(json, Task.schema, format_checker=jsonschema.FormatChecker()):
-    #             return super(Task, cls, jsonData).__new__(cls, jsonData)
-    #     except Exception as e:
-    #         # print(e)
-    #         pass
-
     def __init__(self, jsonData):
-        print('create a new instance~')
-        self.json_data = jsonData
-        self.structured_data = json.loads(jsonData)
-        print(self.structured_data)
-        self.project = self.structured_data['project']
-        self.auth = self.structured_data.get('auth')
-        if self.auth:
-            self.auth_method = self.auth['method']
-            self.auth_url = self.auth['url']
-            self.auth_body = []
-            if self.auth_method == 'post':
-                for i in self.auth['body']:
-                    self.auth_body.append({i['key']: i['value']})
-        self.items = []
-        for i in self.structured_data.get('items'):
-            self.items.append(RequestUrl(i))
-        self.interval = self.structured_data['interval']
+        try:
+            jsonschema.validate(jsonData, Task.schema, format_checker=jsonschema.FormatChecker())
+            self.structured_data = jsonData
+            self.json_data = json.dumps(jsonData)
 
-        self.is_running = True
+            print(self.structured_data)
+            self.project = self.structured_data['project']
+            self.auth = self.structured_data.get('auth')
+            if self.auth:
+                self.auth_method = self.auth['method']
+                self.auth_url = self.auth['url']
+                self.auth_body = []
+                if self.auth_method == 'post':
+                    for i in self.auth['body']:
+                        self.auth_body.append({i['key']: i['value']})
+            self.items = []
+            for i in self.structured_data.get('items'):
+                self.items.append(RequestUrl(i))
+            self.interval = self.structured_data['interval']
+
+            self.is_running = True
+        except Exception as e:
+            print(e)
         pass
 
     def start(self):
@@ -192,8 +190,11 @@ class Monitor(object):
     def list(self):
         l = []
         for i in self.tasks_list:
+            print(i)
+            print(self.tasks)
+            print(self.tasks[i])
             l.append({"hash": i,
-                      "name":self.tasks[i].project})
+                      "name": self.tasks[i].project})
         return (json.dumps(l))
         pass
 
@@ -203,12 +204,15 @@ class Monitor(object):
         pass
 
     def add(self, data):
+        data = json.loads(data)
+        
+        jsonschema.validate(data, Task.schema, format_checker=jsonschema.FormatChecker())
         task = Task(data)
-        print(task)
+
         t = hashlib.md5(str(time.time()).encode()).hexdigest()
         self.tasks[t] = task
         self.tasks_list.append(t)
-        print(task, self.tasks)
+
 
     def update(self, task, data):
         self.tasks[task] = Task(data)

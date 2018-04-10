@@ -1,5 +1,6 @@
 import jsonschema
 from jsonschema import *
+import monitor
 
 schema = {
     'type': 'object',
@@ -50,9 +51,10 @@ schema = {
             ]
 
         },
-        'items': {
+        'item': {
             'type': 'array',
-            "items": {
+
+            "items": [{
                 'oneOf': [
                     {
                         'type': 'object',
@@ -96,7 +98,7 @@ schema = {
                         },
                     },
                 ]
-            },
+            }],
         },
 
     }
@@ -116,8 +118,17 @@ json = {
          'body': [{'1key': 'sad', 'value': 'sda'}, {'key': 'sad', 'value': 'sda'}]}
     ]
 }
+json = {"project": "123123",
+        "is_running": True,
+        "auth": {"method": "post",
+                 "url": "http://1.1.1.1",
+                 "body": [{"key": "a", "value": "2"}]
+                 },
+        "items": [{"url": "http://123.1.1.12", "method": "get"}],
+        "interval": 5
+        }
 try:
-    validate(json, schema, format_checker=FormatChecker())
+    validate(json, monitor.Task.schema, format_checker=FormatChecker())
 except Exception as e:
     print(e)
 # print(isinstance('asd', str))
