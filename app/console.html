@@ -34,7 +34,7 @@
                         <input type='input' v-model='newTask.project' class="kv_value">
                         <br>
                         <div class="kv_key">Interval:</div>
-                        <input type='number' v-model='newTask.interval' class="kv_value">
+                        <input type='number' v-model='newTask.interval' class="kv_value" min="0">
                         <br>
                         <div class="kv_key">Run:</div>
                         <select v-model='newTask.is_running' class="kv_value">
@@ -57,11 +57,11 @@
                                 <option>get</option>
                             </select>
                             
-                            <div v-if='newTask.auth.method=="post"'>
+                            <div v-if='newTask.auth.method=="post"' class="ul_bg">
                                 body:
-                                <ul v-for='kv in newTask.auth.body'>
+                                <ul >
 
-                                    <li>
+                                    <li v-for='kv in newTask.auth.body'>
                                         key:
                                         <input v-model="kv.key">
                                         value:
@@ -79,40 +79,43 @@
                         </div>
                         <br>
                         <div class="kv_key">Items:</div>
-                        <ul v-for='item in newTask.items'>
-                            <li>
-                                url:<input v-model='item.url'>
-                                <br>
-                                method:
-                                <select v-model="item.method">
-                                    <option>get</option>
-                                    <option>post</option>
-                                </select>
-                                <br>
-                                <div v-if='item.method=="post"'>
-                                    body:
-                                    <ul v-for='kv in item.body'>
+                        <div class="ul_bg">
+                            <ul style="width:85%"> 
+                                <li v-for='item in newTask.items' style="margin-bootom:8px;">
+                                    <div class="kv_key">url:</div>
+                                    <input v-model='item.url' class="kv_value" >
+                                    <br>
+                                    method:
+                                    <select v-model="item.method" class="kv_value" >
+                                        <option>get</option>
+                                        <option>post</option>
+                                    </select>
+                                    <br>
+                                    <div v-if='item.method=="post"'>
+                                        body:
+                                        <ul v-for='kv in item.body'>
 
-                                        <li>
-                                            key:
-                                            <input v-model="kv.key">
-                                            value:
-                                            <input v-model="kv.value">
+                                            <li style="margin-bottom:5px;">
+                                                key:
+                                                <input v-model="kv.key" >
+                                                value:
+                                                <input v-model="kv.value" >
 
-                                        </li>
+                                            </li>
 
-                                    </ul>
-                                    <ul>
-                                        <li @click.stop="addKV(item)">+</li>
-                                    </ul>
-                                </div>
+                                        </ul>
+                                        <ul>
+                                            <li @click.stop="addKV(item)">+</li>
+                                        </ul>
+                                    </div>
 
-                            </li>
-                            
-                        </ul>
-                        <ul>
-                            <li @click.stop="addItem(newTask.items)">+</li>
-                        </ul>
+                                </li>
+                                
+                            </ul>
+                            <ul>
+                                <li @click.stop="addItem(newTask.items)">+</li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="modal-footer" style="border-top:1px solid #ddd;padding-top:10px">
@@ -263,6 +266,7 @@
 
             },
             save: function(){
+
                 fetch('/tasks/'+this.onFocusTaskHash, {
                     method: 'post',
                     body: JSON.stringify(this.onFocusTask)
@@ -274,6 +278,7 @@
                   });
             },
             create: function(){
+                this.newTask.interval = parseInt(this.newTask.interval)
                 fetch('/tasks/add', {
                     method: 'post',
                     body: JSON.stringify(this.newTask)

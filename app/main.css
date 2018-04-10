@@ -43,6 +43,8 @@
 
 .modal-body {
   margin: 20px 0;
+  padding-left: 10px;
+  padding-right: 20px;
   overflow-y:auto;
   height: calc(100% - 100px)
 }
@@ -81,5 +83,19 @@
   /*position: absolute;*/
 }
 .kv_value{
-  margin-left: 100px;
+  /*margin-left: 100px;*/
+    border: none;
+    border-bottom: 1px solid #ccc;
+    width: 100%;
+    outline: none;
+    margin-bottom: 10px;
+}
+.ul_bg {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%;
+    outline: none;
+    margin-bottom: 10px;
+    /*padding-right: 20px;*/
+    /*background-color: #f7f7f8;*/
 }
