@@ -8,10 +8,7 @@
 </head>
 <body>
 <div id="app">
-    {{ tasks }}
-
-    <button @click.stop="addNew()">新建</button>
-    <button id="show-modal" @click="addNew()">Show Modal</button>
+    <button id="show-modal" @click="addNew()">新建</button>
     <!-- use the modal component, pass in the prop -->
     <div v-if="showModal" @close="showModal = false">
     
@@ -34,7 +31,7 @@
                         <input type='input' v-model='newTask.project' class="kv_value">
                         <br>
                         <div class="kv_key">Interval:</div>
-                        <input type='number' v-model='newTask.interval' class="kv_value" min="0">
+                        <input type='number' v-model.number='newTask.interval' class="kv_value" min="0">
                         <br>
                         <div class="kv_key">Run:</div>
                         <select v-model='newTask.is_running' class="kv_value">
@@ -47,7 +44,7 @@
                             <option>true</option>
                             <option>false</option>
                         </select>
-                        <div v-if="newTaskNeedAuth" style='margin-left:20px;border:1px solid #eee'>
+                        <div v-if="newTaskNeedAuth=='true'" style='margin-left:20px;border:1px solid #eee'>
                             <div class="kv_key">URL:</div>
                             <input type='input' v-model='newTask.auth.url' class="kv_value">
                             <br>
@@ -120,8 +117,10 @@
 
                     <div class="modal-footer" style="border-top:1px solid #ddd;padding-top:10px">
                         <slot name="footer">
-                            default footer
-                            <button class="modal-default-button" @click="create()">
+                            <button class="modal-default-button" v-if='!onFocusTaskHash' @click="create()">
+                                Create
+                            </button>
+                            <button class="modal-default-button" v-if='onFocusTaskHash' @click="save()">
                                 Save
                             </button>
                             <button class="modal-default-button" @click="showModal=false">
@@ -139,48 +138,7 @@
         <li>
             <div @click.stop="getTask(task.hash)">
                 {{task.name}}
-            </div>
-            <div v-if="onFocusTask.project==task.name">
-
-                <br>
-                Project:<input type='input' v-model='onFocusTask.project'>
-                <br>
-                Interval:<input type='input' v-model='onFocusTask.interval'>
-                <br>
-                Items:
-                <ul v-for='item in onFocusTask.items'>
-                    <li>
-                        url:<input v-model='item.url'>
-                        <br>
-                        method:
-                        <select v-model="item.method">
-                            <option>get</option>
-                            <option>post</option>
-                        </select>
-                        <br>
-                        <div v-if='item.method=="post"'>
-                            body:
-                            <ul v-for='kv in item.body'>
-
-                                <li>
-                                    key:
-                                    <input v-model="kv.key">
-                                    value:
-                                    <input v-model="kv.value">
-
-                                </li>
-
-                            </ul>
-                            <ul>
-                                <li @click.stop="addKV(item)">+</li>
-                            </ul>
-                        </div>
-
-                    </li>
-                </ul>
-                <button @click.stop="save()">save</button>
-            </div>
-
+            </div>    
         </li>
     </ul>
 </div>
@@ -207,20 +165,21 @@
         el: '#app',
         data: {
             tasks:'',
-
             onFocusTask:'',
             onFocusTaskHash:'',
             newTask:'',
-            newTaskNeedAuth:false,
+            newTaskNeedAuth:"false",
             showNewPage: false,
             showModal: false,
         },
         methods: {
             addNew: function(){
+                this.saveButtonText='Create'
+                this.onFocusTaskHash = ''
                 this.showModal=true
                 this.newTask = {
                     "project": "",
-                    "is_running": true,
+                    "is_running": 'true',
                     "auth": {
                         "method": "post",
                         "url": "",
@@ -250,8 +209,18 @@
                 fetch('/tasks/'+hash)
                 .then(response => response.json())
                 .then(json=>{
-                    this.onFocusTask = json
+                    this.newTask = json
                     this.onFocusTaskHash = hash
+                    this.showModal = true
+                    if(!this.newTask.hasOwnProperty('auth')){
+                        this.newTask.auth = {
+                            "method": "post",
+                            "url": "",
+                            "body": [
+                                {"key":"","value":""}
+                            ]
+                        }
+                    }
                     <!--console.log(JSON.stringify(json))-->
                 })
             },
@@ -266,19 +235,35 @@
 
             },
             save: function(){
-
+                this.newTask.interval = parseInt(this.newTask.interval)
+                if(this.newTask.is_running == 'true'){
+                    this.newTask.is_running = true
+                }else{
+                    this.newTask.is_running = false
+                }
+                if(this.newTaskNeedAuth=='false'){
+                    delete this.newTask.auth
+                }
                 fetch('/tasks/'+this.onFocusTaskHash, {
                     method: 'post',
-                    body: JSON.stringify(this.onFocusTask)
+                    body: JSON.stringify(this.newTask)
                   })
                   .then(response => response.json())
                   .then(json=>{
-
+                    this.showModal = false
                     <!--console.log(JSON.stringify(json))-->
                   });
             },
             create: function(){
                 this.newTask.interval = parseInt(this.newTask.interval)
+                if(this.newTask.is_running == 'true'){
+                    this.newTask.is_running = true
+                }else{
+                    this.newTask.is_running = false
+                }
+                if(this.newTaskNeedAuth=='false'){
+                    delete this.newTask.auth
+                }
                 fetch('/tasks/add', {
                     method: 'post',
                     body: JSON.stringify(this.newTask)
@@ -288,7 +273,14 @@
                     this.showModal = false
                     <!--console.log(JSON.stringify(json))-->
                   });
-            }
+                fetch('/tasks')
+                .then(response => response.json())
+                .then(json=>{
+                    this.tasks = json
+                    <!--console.log(JSON.stringify(json))-->
+                })
+            },
+        
 
         },
         created(){

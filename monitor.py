@@ -1,8 +1,9 @@
-import pickledb
+import pickle
 import jsonschema
 import json
 import time, hashlib
 from tornado import httpclient
+import tornado.ioloop
 
 
 class Task(object):
@@ -130,22 +131,97 @@ class Task(object):
             if self.auth:
                 self.auth_method = self.auth['method']
                 self.auth_url = self.auth['url']
-                self.auth_body = []
+                self.auth_body = ''
                 if self.auth_method == 'post':
                     for i in self.auth['body']:
-                        self.auth_body.append({i['key']: i['value']})
+                        self.auth_body += (i['key'] + '=' + i['value'] + '&')
+
             self.items = []
             for i in self.structured_data.get('items'):
                 self.items.append(RequestUrl(i))
             self.interval = self.structured_data['interval']
 
-            self.is_running = True
+            self.is_running = self.structured_data['is_running']
+
+            self.result = 'ok'
+
+            self.runner = tornado.ioloop.PeriodicCallback(self.do, self.interval * 1000)
+            self.run()
         except Exception as e:
             print(e)
         pass
 
+    def run(self):
+        if self.is_running:
+            self.do()
+
+            if not self.runner.is_running():
+                self.runner.start()
+        else:
+            if self.runner.is_running():
+                self.runner.stop()
+
     def start(self):
-        pass
+        self.runner.start()
+
+    def stop(self):
+        self.runner.stop()
+
+    def do(self):
+        print("==================do=====================")
+        cookie = ''
+        if self.auth:
+            if self.auth_method == 'post':
+                a = httpclient.HTTPRequest(self.auth_url, method=self.auth_method.upper(),
+                                           body=self.auth_body)
+            elif self.auth_method == 'get':
+                a = httpclient.HTTPRequest(self.auth_url)
+            http_client = httpclient.HTTPClient()
+            try:
+                response = http_client.fetch(a)
+
+                cookie = ';'.join(response.headers.get_list('Set-Cookie'))
+            except httpclient.HTTPError as e:
+                print("Error: " + str(e))
+            except Exception as e:
+                print("Error: " + str(e))
+
+        for i in self.items:
+            has_err = 0
+            if i.method == 'get':
+
+                req = httpclient.HTTPRequest(i.url, headers={
+                    "cookie": cookie})
+                http_client = httpclient.HTTPClient()
+                try:
+                    response = http_client.fetch(req)
+                    if not response.code & response.code == 200:
+                        has_err = 1
+                        print(response.code)
+                        print(response.reason)
+                finally:
+                    http_client.close()
+
+            elif i.method == 'post':
+                body = ''
+                for l in i.body:
+                    body += (l['key'] + '=' + l['value'] + '&')
+                req = httpclient.HTTPRequest(i.url, headers={
+                    "cookie": cookie}, method='post', body=body)
+                http_client = httpclient.HTTPClient()
+                try:
+                    response = http_client.fetch(req)
+                    if not response.code & response.code == 200:
+                        has_err = 1
+                        print(response.code)
+                        print(response.reason)
+                finally:
+                    http_client.close()
+            if has_err:
+                self.result = 'err'
+            else:
+                self.result = 'ok'
+        print(self.result)
 
 
 class RequestUrl(object):
@@ -160,10 +236,23 @@ class RequestUrl(object):
 
 class Monitor(object):
     def __init__(self):
-        self.db = pickledb.load('data', False)
-        # self.db.dump()
-        self.tasks_list = []
-        self.tasks = {}
+        # self.db = pickle.load('data', False)
+        try:
+            with open('data', 'rb') as f:
+                self.data = pickle.load(f)
+            self.tasks_list = self.data['task_list']
+            self.tasks = {}
+            for i in self.data['task_list']:
+                print(i, self.data['task_json'][i])
+                self.reload(i, self.data['task_json'][i])
+        except Exception as e:
+            print(e)
+            self.tasks_list = []
+            self.tasks = {}
+            self.data = {'task_list': self.tasks_list,
+                         'task_json': {}}
+            with open('data', 'wb') as f:
+                pickle.dump(self.data, f)
         self.__start_all__()
 
     def __start__(self, name):
@@ -187,69 +276,89 @@ class Monitor(object):
     def delete(self, task):
         self.tasks.pop(task)
         self.tasks_list.remove(task)
-        pass
+
+        self.data['task_json'] = self.tasks[task].json_data
+        with open('data', 'wb') as f:
+            pickle.dump(self.data, f)
 
     def list(self):
         l = []
         for i in self.tasks_list:
-            print(i)
-            print(self.tasks)
-            print(self.tasks[i])
+            # print(i)
+            # print(self.tasks)
+            # print(self.tasks[i])
             l.append({"hash": i,
                       "name": self.tasks[i].project})
-        return (json.dumps(l))
+        return json.dumps(l)
         pass
 
     def get(self, task):
-        return self.tasks[task].json_data
+        if task in self.tasks_list:
+            return self.tasks[task].json_data
+        else:
+            return ''
 
         pass
 
     def add(self, data):
         data = json.loads(data)
-        
+
         jsonschema.validate(data, Task.schema, format_checker=jsonschema.FormatChecker())
         task = Task(data)
-
+        # print(task)
         t = hashlib.md5(str(time.time()).encode()).hexdigest()
         self.tasks[t] = task
         self.tasks_list.append(t)
 
+        print(type(self.tasks[t].json_data))
+        self.data['task_json'][t] = self.tasks[t].json_data
+        print(self.data)
+        with open('data', 'wb') as f:
+            pickle.dump(self.data, f)
 
     def update(self, task, data):
+        data = json.loads(data)
+        self.tasks[task].stop()
+        self.tasks[task] = Task(data)
+
+        self.data['task_json'][task] = self.tasks[task].json_data
+        with open('data', 'wb') as f:
+            pickle.dump(self.data, f)
+
+    def reload(self, task, data):
+        data = json.loads(data)
         self.tasks[task] = Task(data)
 
 
 monitor = Monitor()
 
-'''
-from tornado import httpclient
 
-a = httpclient.HTTPRequest("http://10.96.2.198/agtlysxx/pubmodule/j_security_check", method="POST",
-                           body="j_username=101000&j_password=1111")
-
-http_client = httpclient.HTTPClient()
-try:
-    response = http_client.fetch(a)
-    print(response.body.decode("utf-8"))
-    print(response.code)
-    print(response.headers)
-
-except httpclient.HTTPError as e:
-    # HTTPError is raised for non-200 responses; the response
-    # can be found in e.response.
-    print("Error: " + str(e))
-except Exception as e:
-    # Other errors are possible, such as IOError.
-    print("Error: " + str(e))
-
+# from tornado import httpclient
+#
+# a = httpclient.HTTPRequest("http://10.96.2.198/agtlysxx/pubmodule/j_security_check", method="POST",
+#                            body="j_username=101000&j_password=1111")
+#
 # http_client = httpclient.HTTPClient()
-req = httpclient.HTTPRequest("http://10.96.2.198/agtlysxx/ztc.do", headers={
-    "cookie": "JSESSIONID=hT2bh6Fht25Zr9GLnlLrT50G6GnxnhQLQ8tpSF3vtRn1xZ0mmGnW!1249720348"})
-response = http_client.fetch(req)
-print(response.body.decode("utf-8"))
-print(response.reason, response.code)
-print(response.headers)
-print(response.effective_url)
-http_client.close()
-'''
+# try:
+#     response = http_client.fetch(a)
+#     print(response.body.decode("utf-8"))
+#     print(response.code)
+#     print(response.headers)
+#
+# except httpclient.HTTPError as e:
+#     # HTTPError is raised for non-200 responses; the response
+#     # can be found in e.response.
+#     print("Error: " + str(e))
+# except Exception as e:
+#     # Other errors are possible, such as IOError.
+#     print("Error: " + str(e))
+#
+# # http_client = httpclient.HTTPClient()
+# req = httpclient.HTTPRequest("http://10.96.2.198/agtlysxx/ztc.do", headers={
+#     "cookie": "JSESSIONID=hT2bh6Fht25Zr9GLnlLrT50G6GnxnhQLQ8tpSF3vtRn1xZ0mmGnW!1249720348"})
+# response = http_client.fetch(req)
+# print(response.body.decode("utf-8"))
+# print(response.reason, response.code)
+# print(response.headers)
+# print(response.effective_url)
+# http_client.close()
