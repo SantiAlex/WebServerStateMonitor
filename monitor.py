@@ -142,9 +142,10 @@ class Task(object):
             self.interval = self.structured_data['interval']
 
             self.is_running = self.structured_data['is_running']
-
+            self.cookie = ''
             self.runner = tornado.ioloop.PeriodicCallback(self.do, self.interval * 1000 * 60)
             self.run()
+
         except Exception as e:
             print(e)
         pass
@@ -170,8 +171,8 @@ class Task(object):
             return ''
         r = 'ok'
         for i in self.items:
-            print(i.stats)
-            if i.stats != 200:
+            print(i.state)
+            if i.state != 200:
                 r = 'err'
         return r
 
@@ -179,13 +180,24 @@ class Task(object):
         if not self.is_running:
             return ''
         for i in self.items:
-            if i.stats >= 500 or i.stats == 0:
+            if i.state >= 500 or i.state == 0:
                 return 'err'
         return 'ok'
 
+    def info(self):
+        r = []
+        for i in self.items:
+            r.append({'url': i.url, 'method': i.method, 'body': i.body, 'state': i.state})
+        return json.dumps(r)
+
     def do(self):
         print("==================do=====================")
-        cookie = ''
+
+        def on_response(response):
+            self.cookie = ';'.join(response.headers.get_list('Set-Cookie'))
+            for j in self.items:
+                self.fetch(j)
+
         if self.auth:
             if self.auth_method == 'post':
                 a = httpclient.HTTPRequest(self.auth_url, method=self.auth_method.upper(),
@@ -194,31 +206,32 @@ class Task(object):
                 a = httpclient.HTTPRequest(self.auth_url)
             http_client = httpclient.AsyncHTTPClient()
             try:
-                response = http_client.fetch(a, raise_error=False).result()
-
-                cookie = ';'.join(response.headers.get_list('Set-Cookie'))
+                http_client.fetch(a, on_response)
             except httpclient.HTTPError as e:
                 print("Error: " + str(e))
             except Exception as e:
                 print("Error: " + str(e))
 
-        for i in self.items:
-            self.fetch(i, cookie)
+        else:
+            for i in self.items:
+                self.fetch(i)
 
     # @staticmethod
-    def fetch(self, i, cookie):
-
+    def fetch(self, i):
         def on_response(response):
             if response.code:
-                i.stats = response.code
+                i.state = response.code
             else:
-                i.stats = 0
+                i.state = 0
 
         if i.method == 'get':
 
             req = httpclient.HTTPRequest(i.url, headers={
-                "cookie": cookie})
+                "cookie": self.cookie})
+
+            httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
             http_client = httpclient.AsyncHTTPClient()
+
             try:
                 http_client.fetch(req, on_response)
 
@@ -229,15 +242,13 @@ class Task(object):
         elif i.method == 'post':
             body = ''
             for l in i.body:
+                print(l)
                 body += (l['key'] + '=' + l['value'] + '&')
             req = httpclient.HTTPRequest(i.url, headers={
-                "cookie": cookie}, method='post', body=body)
+                "cookie": self.cookie}, method='post', body=body)
             http_client = httpclient.AsyncHTTPClient()
             try:
-                response = http_client.fetch(req, raise_error=False).result()
-                if not response.code & response.code == 200:
-                    print(response.code)
-                    print(response.reason)
+                http_client.fetch(req, on_response)
             finally:
                 # http_client.close()
                 pass
@@ -245,13 +256,13 @@ class Task(object):
 
 class RequestUrl(object):
     def __init__(self, item):
-        self.stats = 0
+        self.state = 0
         self.url = item['url']
         self.method = item['method']
         self.body = []
         if self.method == 'post':
             for i in item['body']:
-                self.body.append({i['key']: i['value']})
+                self.body.append({'key': i['key'], 'value': i['value']})
 
 
 class Monitor(object):
@@ -294,10 +305,11 @@ class Monitor(object):
         pass
 
     def delete(self, task):
+        self.tasks[task].stop()
         self.tasks.pop(task)
         self.tasks_list.remove(task)
 
-        self.data['task_json'] = self.tasks[task].json_data
+        self.data['task_json'].pop(task)
         with open('data', 'wb') as f:
             pickle.dump(self.data, f)
 
@@ -352,8 +364,8 @@ class Monitor(object):
     def report_has_err(self, task):
         return self.tasks[task].has_5()
 
-    def report_list_info(self):
-        return ''
+    def report_list_info(self, task):
+        return self.tasks[task].info()
 
 
 monitor = Monitor()

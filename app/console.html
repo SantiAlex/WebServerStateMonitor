@@ -8,9 +8,14 @@
 </head>
 <body>
 <div id="app">
-    <button id="show-modal" @click="addNew()">新建</button>
-    <!-- use the modal component, pass in the prop -->
-    <div v-if="showModal" @close="showModal = false">
+    <div style="height:40px;width:100%;border-bottom: 1px solid #aaa;box-shadow: 1px 1px 1px 1px #ddd">
+        <div style="display:inline-block;"><h3 style="margin: 5px 20px">任务</h3></div>
+        <button id="show-modal" @click="addNew()">新建</button>
+        <button id="show-modal" @click="edit=true" v-if="!edit">编辑</button>
+        <button id="show-modal" @click="edit=false" v-if="edit">完成</button>
+    </div>
+    
+    <div v-if="showModal&!edit" @close="showModal = false">
     
         <div class="modal-mask">
             <div class="modal-wrapper">
@@ -77,9 +82,11 @@
                         <br>
                         <div class="kv_key">Items:</div>
                         <div class="ul_bg">
-                            <ul style="width:85%"> 
-                                <li v-for='item in newTask.items' style="margin-bootom:8px;">
-                                    <div class="kv_key">url:</div>
+                            <ul style="width:85%;margin-top: 10px;"> 
+                                <li v-for='(item,index) in newTask.items' style="margin-bottom:8px;">
+                                    <div class="kv_key">url:
+                                        <button class="del_button" @click.stop="delLine(newTask.items,index)">+</button>
+                                    </div>
                                     <input v-model='item.url' class="kv_value" >
                                     <br>
                                     method:
@@ -90,14 +97,14 @@
                                     <br>
                                     <div v-if='item.method=="post"'>
                                         body:
-                                        <ul v-for='kv in item.body'>
+                                        <ul v-for='(kv,index) in item.body'>
 
                                             <li style="margin-bottom:5px;">
                                                 key:
-                                                <input v-model="kv.key" >
+                                                <input v-model="kv.key" style="width:100px;">
                                                 value:
-                                                <input v-model="kv.value" >
-
+                                                <input v-model="kv.value" style="width:200px;" >
+                                                <button class="del_button" style="margin:1px 5px" @click.stop="delLine(item.body,index)">+</button>
                                             </li>
 
                                         </ul>
@@ -105,7 +112,7 @@
                                             <li @click.stop="addKV(item)">+</li>
                                         </ul>
                                     </div>
-
+                                    <div style="border-bottom: 1px solid #ddd;margin:5px -45.5px 5px -40px"></div>
                                 </li>
                                 
                             </ul>
@@ -134,13 +141,40 @@
     
         
     </div>
-    <ul v-for="task in tasks">
-        <li>
-            <div @click.stop="getTask(task.hash)">
-                {{task.name}}
-            </div>    
-        </li>
-    </ul>
+    <div style="height: 400px; overflow-y: auto; margin-bottom: 20px; ">
+        <ul style="padding: 10px 50px" v-bind:class="{ onedit: edit }">
+            <li class="menulist" v-for="task in tasks" style="margin: 10px;border-bottom: 1px solid #eee" @click.stop="getTask(task.hash)" >
+                <div style="width: 80%;margin: 10px;display: inline-block;">
+                    {{task.name}}
+                </div>
+                <button v-if="edit" style="float: right;margin: 10px;border-radius: 5px;border:none" @click.stop="del(task.hash,task.name)">delete</button> 
+            </li>
+        </ul>
+    </div>
+    <div style="height: 40px;border-top: 1px solid #aaa;border-bottom: 1px solid #aaa;box-shadow: 1px 1px 1px 1px #ddd">
+        <div style="display:inline-block;"><h3 style="margin: 5px 20px">状态</h3></div>
+    </div>
+        <ul style="padding: 10px 50px">
+            <li class="menulist" v-for="task in tasks" style="margin: 10px;border-bottom: 1px solid #eee" @click.stop="getInfo(task.hash)" >
+                <div style="width: 80%;margin: 10px;display: inline-block;">
+                    {{task.name}}
+                </div>
+                <table v-if="showTable==task.hash" style="width:100%">
+                    <tr>
+                        <th>url</th>
+                        <th>method</th>
+                        <th>body</th>
+                        <th>state</th>
+                    </tr>
+                    <tr v-for="state in stateInfo">
+                        <td>{{state.url}}</td>
+                        <td>{{state.method}}</td>
+                        <td>{{state.body}}</td>
+                        <td>{{state.state}}</td>
+                    </tr>
+                </table> 
+            </li>
+        </ul>
 </div>
 </body>
 </html>
@@ -171,6 +205,9 @@
             newTaskNeedAuth:"false",
             showNewPage: false,
             showModal: false,
+            showTable:false,
+            stateInfo:'',
+            edit:false,
         },
         methods: {
             addNew: function(){
@@ -206,23 +243,36 @@
                         })
             },
             getTask: function(hash){
-                fetch('/tasks/'+hash)
+                if(!this.edit){
+                    fetch('/tasks/'+hash)
+                    .then(response => response.json())
+                    .then(json=>{
+                        this.newTask = json
+                        this.onFocusTaskHash = hash
+                        this.showModal = true
+                        if(!this.newTask.hasOwnProperty('auth')){
+                            this.newTask.auth = {
+                                "method": "post",
+                                "url": "",
+                                "body": [
+                                    {"key":"","value":""}
+                                ]
+                            }
+                        }
+                        <!--console.log(JSON.stringify(json))-->
+                    })
+                }
+                
+            },
+            getInfo: function(hash){
+                fetch('/report/info/'+hash)
                 .then(response => response.json())
                 .then(json=>{
-                    this.newTask = json
-                    this.onFocusTaskHash = hash
-                    this.showModal = true
-                    if(!this.newTask.hasOwnProperty('auth')){
-                        this.newTask.auth = {
-                            "method": "post",
-                            "url": "",
-                            "body": [
-                                {"key":"","value":""}
-                            ]
-                        }
-                    }
+                    this.stateInfo = json
+                    this.showTable = hash
                     <!--console.log(JSON.stringify(json))-->
                 })
+
             },
             addKV: function(item){
                 console.log(item)
@@ -280,6 +330,25 @@
                     <!--console.log(JSON.stringify(json))-->
                 })
             },
+            del: function(hash,name){
+                var r = confirm("确定要删除'"+name+"'吗?");
+                if (r == true) {
+                    fetch('/tasks/'+hash, {
+                        method: 'delete',
+                      })
+                      .then(response => response.json())
+                      .then(json=>{
+                        this.tasks = json
+                        <!--console.log(JSON.stringify(json))-->
+                      });
+                } else {
+                    txt = "You pressed Cancel!";
+                }
+            },
+            delLine:function(list,index){
+                // console.log(index)
+                list.pop(index)
+            }
         
 
         },

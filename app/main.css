@@ -14,10 +14,10 @@
   /*display: table-cell;*/
   vertical-align: middle;
 /*  overflow: hidden;*/
-  margin-top: 10%;
+  margin-top: 80px;
   margin-bottom: 10%;
   height: 80%;
-
+  max-height: 1000px;
 }
 
 .modal-container {
@@ -98,4 +98,31 @@
     margin-bottom: 10px;
     /*padding-right: 20px;*/
     /*background-color: #f7f7f8;*/
+}
+#show-modal{
+  float: right;
+  width:100px;
+  height:25px;
+  margin:8px;
+  border-radius: 2px;
+  border: none;
+}
+th,td{
+  border: 1px solid #ccc;
+}
+.menulist:hover{
+  background-color: #eee;
+}
+.onedit{
+  border: solid 1px #ddd;
+  box-shadow: 1px 1px 1px 1px #ddd;
+}
+.del_button{
+  transform:rotate(45deg);
+  float: right;
+  border:none;
+  font-weight:500;
+  background:none;
+  outline: none;
+  margin-right: -30px;
 }

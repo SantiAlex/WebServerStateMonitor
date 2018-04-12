@@ -100,18 +100,20 @@ class HasErrHandler(tornado.web.RequestHandler):
     def get(self, task):
         self.write(monitor.monitor.report_has_err(task))
 
+class InfoHandler(tornado.web.RequestHandler):
+    def get(self, task):
+        self.write(monitor.monitor.report_list_info(task))
 
 if __name__ == "__main__":
     tornado.options.parse_command_line()
     app = tornado.web.Application(
         handlers=[
-            (r"/", IndexHandler),
-            (r"/s", StopHandler),
             (r"/tasks", ListHandler),
             (r"/tasks/add", AddHandler),
             (r"/tasks/(?P<task>[0-9a-z]*)", TaskHandler),
             (r"/report/whole/(?P<task>[0-9a-z]*)", ReportHandler),
             (r"/report/haserr/(?P<task>[0-9a-z]*)", HasErrHandler),
+            (r"/report/info/(?P<task>[0-9a-z]*)", InfoHandler),
         ],
         static_path=os.path.join(os.path.dirname(__file__), "app"),
         static_url_prefix="/app/",
