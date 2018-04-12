@@ -143,9 +143,7 @@ class Task(object):
 
             self.is_running = self.structured_data['is_running']
 
-            self.result = 'ok'
-
-            self.runner = tornado.ioloop.PeriodicCallback(self.do, self.interval * 1000)
+            self.runner = tornado.ioloop.PeriodicCallback(self.do, self.interval * 1000 * 60)
             self.run()
         except Exception as e:
             print(e)
@@ -167,6 +165,24 @@ class Task(object):
     def stop(self):
         self.runner.stop()
 
+    def result(self):
+        if not self.is_running:
+            return ''
+        r = 'ok'
+        for i in self.items:
+            print(i.stats)
+            if i.stats != 200:
+                r = 'err'
+        return r
+
+    def has_5(self):
+        if not self.is_running:
+            return ''
+        for i in self.items:
+            if i.stats >= 500 or i.stats == 0:
+                return 'err'
+        return 'ok'
+
     def do(self):
         print("==================do=====================")
         cookie = ''
@@ -176,9 +192,9 @@ class Task(object):
                                            body=self.auth_body)
             elif self.auth_method == 'get':
                 a = httpclient.HTTPRequest(self.auth_url)
-            http_client = httpclient.HTTPClient()
+            http_client = httpclient.AsyncHTTPClient()
             try:
-                response = http_client.fetch(a)
+                response = http_client.fetch(a, raise_error=False).result()
 
                 cookie = ';'.join(response.headers.get_list('Set-Cookie'))
             except httpclient.HTTPError as e:
@@ -187,45 +203,49 @@ class Task(object):
                 print("Error: " + str(e))
 
         for i in self.items:
-            has_err = 0
-            if i.method == 'get':
+            self.fetch(i, cookie)
 
-                req = httpclient.HTTPRequest(i.url, headers={
-                    "cookie": cookie})
-                http_client = httpclient.HTTPClient()
-                try:
-                    response = http_client.fetch(req)
-                    if not response.code & response.code == 200:
-                        has_err = 1
-                        print(response.code)
-                        print(response.reason)
-                finally:
-                    http_client.close()
+    # @staticmethod
+    def fetch(self, i, cookie):
 
-            elif i.method == 'post':
-                body = ''
-                for l in i.body:
-                    body += (l['key'] + '=' + l['value'] + '&')
-                req = httpclient.HTTPRequest(i.url, headers={
-                    "cookie": cookie}, method='post', body=body)
-                http_client = httpclient.HTTPClient()
-                try:
-                    response = http_client.fetch(req)
-                    if not response.code & response.code == 200:
-                        has_err = 1
-                        print(response.code)
-                        print(response.reason)
-                finally:
-                    http_client.close()
-            if has_err:
-                self.result = 'err'
+        def on_response(response):
+            if response.code:
+                i.stats = response.code
             else:
-                self.result = 'ok'
-        print(self.result)
+                i.stats = 0
+
+        if i.method == 'get':
+
+            req = httpclient.HTTPRequest(i.url, headers={
+                "cookie": cookie})
+            http_client = httpclient.AsyncHTTPClient()
+            try:
+                http_client.fetch(req, on_response)
+
+            finally:
+                # http_client.close()
+                pass
+
+        elif i.method == 'post':
+            body = ''
+            for l in i.body:
+                body += (l['key'] + '=' + l['value'] + '&')
+            req = httpclient.HTTPRequest(i.url, headers={
+                "cookie": cookie}, method='post', body=body)
+            http_client = httpclient.AsyncHTTPClient()
+            try:
+                response = http_client.fetch(req, raise_error=False).result()
+                if not response.code & response.code == 200:
+                    print(response.code)
+                    print(response.reason)
+            finally:
+                # http_client.close()
+                pass
 
 
 class RequestUrl(object):
     def __init__(self, item):
+        self.stats = 0
         self.url = item['url']
         self.method = item['method']
         self.body = []
@@ -284,9 +304,6 @@ class Monitor(object):
     def list(self):
         l = []
         for i in self.tasks_list:
-            # print(i)
-            # print(self.tasks)
-            # print(self.tasks[i])
             l.append({"hash": i,
                       "name": self.tasks[i].project})
         return json.dumps(l)
@@ -328,6 +345,15 @@ class Monitor(object):
     def reload(self, task, data):
         data = json.loads(data)
         self.tasks[task] = Task(data)
+
+    def report_whole(self, task):
+        return self.tasks[task].result()
+
+    def report_has_err(self, task):
+        return self.tasks[task].has_5()
+
+    def report_list_info(self):
+        return ''
 
 
 monitor = Monitor()

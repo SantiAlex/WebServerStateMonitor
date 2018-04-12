@@ -236,7 +236,7 @@
             },
             save: function(){
                 this.newTask.interval = parseInt(this.newTask.interval)
-                if(this.newTask.is_running == 'true'){
+                if(this.newTask.is_running == 'true' || this.newTask.is_running == true){
                     this.newTask.is_running = true
                 }else{
                     this.newTask.is_running = false
@@ -256,7 +256,7 @@
             },
             create: function(){
                 this.newTask.interval = parseInt(this.newTask.interval)
-                if(this.newTask.is_running == 'true'){
+                if(this.newTask.is_running == 'true'|| this.newTask.is_running == true){
                     this.newTask.is_running = true
                 }else{
                     this.newTask.is_running = false

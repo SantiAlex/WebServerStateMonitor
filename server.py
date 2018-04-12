@@ -3,7 +3,7 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 import monitor
-import os,pickle
+import os, pickle
 
 from tornado.options import define, options
 
@@ -91,6 +91,16 @@ class TaskHandler(tornado.web.RequestHandler):
         self.write(monitor.monitor.list())
 
 
+class ReportHandler(tornado.web.RequestHandler):
+    def get(self, task):
+        self.write(monitor.monitor.report_whole(task))
+
+
+class HasErrHandler(tornado.web.RequestHandler):
+    def get(self, task):
+        self.write(monitor.monitor.report_has_err(task))
+
+
 if __name__ == "__main__":
     tornado.options.parse_command_line()
     app = tornado.web.Application(
@@ -100,7 +110,8 @@ if __name__ == "__main__":
             (r"/tasks", ListHandler),
             (r"/tasks/add", AddHandler),
             (r"/tasks/(?P<task>[0-9a-z]*)", TaskHandler),
-
+            (r"/report/whole/(?P<task>[0-9a-z]*)", ReportHandler),
+            (r"/report/haserr/(?P<task>[0-9a-z]*)", HasErrHandler),
         ],
         static_path=os.path.join(os.path.dirname(__file__), "app"),
         static_url_prefix="/app/",
