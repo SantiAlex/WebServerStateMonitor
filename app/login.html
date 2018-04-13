@@ -45,14 +45,13 @@
 	<div id='app'>
 		<h1>Login</h1>
 		<div class='line'>
-			Username: <input class='ip' type="text" name="username" v-model="un"/>
-        
+			Username: <input class='ip' type="text" name="username" v-model="un" @keyup.enter="submit"/>        
         </div>
         <div class="line">
-        Password: <input class='ip' type="password" name="password" v-model="pw"/>
+        Password: <input class='ip' type="password" name="password" v-model="pw" @keyup.enter="submit"/>
         </div>
         <div class="line">
-        <input id='bt' type="button" @click="submit()" v-on:keyup.enter="submit" value="Log In"/>
+        <input id='bt' type="button" @click="submit" @keyup.enter="submit" value="Log In"/>
         </div>
     </div>
 </body>
@@ -88,13 +87,5 @@
 
             },
         },
-  //       mounted() {
-  //       	var that = this
-		//     document.onkeydown=function(e) {
-		//          if(e && e.keyCode==13){  
-		//             that.submit()
-		//          }
-		//     }
-		// }
 	})
 </script>

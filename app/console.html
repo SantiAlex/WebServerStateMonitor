@@ -213,6 +213,7 @@
         },
         methods: {
             addNew: function(){
+                if(this.edit){return}
                 this.saveButtonText='Create'
                 this.onFocusTaskHash = ''
                 this.showModal=true
