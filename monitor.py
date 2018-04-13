@@ -187,7 +187,7 @@ class Task(object):
     def info(self):
         r = []
         for i in self.items:
-            r.append({'url': i.url, 'method': i.method, 'body': i.body, 'state': i.state})
+            r.append({'url': i.url, 'method': i.method, 'body': i.body, 'state': i.state, 'stats': i.stats})
         return json.dumps(r)
 
     def do(self):
@@ -204,6 +204,7 @@ class Task(object):
                                            body=self.auth_body)
             elif self.auth_method == 'get':
                 a = httpclient.HTTPRequest(self.auth_url)
+            httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
             http_client = httpclient.AsyncHTTPClient()
             try:
                 http_client.fetch(a, on_response)
@@ -221,6 +222,8 @@ class Task(object):
         def on_response(response):
             if response.code:
                 i.state = response.code
+                if 500 <= response.code < 599:
+                    i.stats += 1
             else:
                 i.state = 0
 
@@ -228,8 +231,9 @@ class Task(object):
 
             req = httpclient.HTTPRequest(i.url, headers={
                 "cookie": self.cookie})
-
+            #创建AsyncHTTPClient前先如此声明，可以避免DNS阻塞
             httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+            #AsyncHTTPClient异步客户端，避免请求阻塞
             http_client = httpclient.AsyncHTTPClient()
 
             try:
@@ -257,6 +261,7 @@ class Task(object):
 class RequestUrl(object):
     def __init__(self, item):
         self.state = 0
+        self.stats = 0
         self.url = item['url']
         self.method = item['method']
         self.body = []

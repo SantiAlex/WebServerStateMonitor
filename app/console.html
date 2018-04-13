@@ -165,12 +165,14 @@
                         <th>method</th>
                         <th>body</th>
                         <th>state</th>
+                        <th>stats</th>
                     </tr>
                     <tr v-for="state in stateInfo">
                         <td>{{state.url}}</td>
                         <td>{{state.method}}</td>
                         <td>{{state.body}}</td>
                         <td>{{state.state}}</td>
+                        <td>{{state.stats}}</td>
                     </tr>
                 </table> 
             </li>
@@ -244,10 +246,13 @@
             },
             getTask: function(hash){
                 if(!this.edit){
-                    fetch('/tasks/'+hash)
+                    fetch('/tasks/'+hash,{credentials: 'include'})
                     .then(response => response.json())
                     .then(json=>{
-                        this.newTask = json
+                        if(json.code == 1){
+                            window.location = "/app/login.html"
+                        }
+                        this.newTask = json.data
                         this.onFocusTaskHash = hash
                         this.showModal = true
                         if(!this.newTask.hasOwnProperty('auth')){
@@ -259,18 +264,21 @@
                                 ]
                             }
                         }
-                        <!--console.log(JSON.stringify(json))-->
+                        
                     })
                 }
                 
             },
             getInfo: function(hash){
-                fetch('/report/info/'+hash)
+                fetch('/report/info/'+hash,{credentials: 'include'})
                 .then(response => response.json())
                 .then(json=>{
-                    this.stateInfo = json
+                    if(json.code == 1){
+                            window.location = "/app/login.html"
+                        }
+                    this.stateInfo = json.data
                     this.showTable = hash
-                    <!--console.log(JSON.stringify(json))-->
+                    
                 })
 
             },
@@ -296,12 +304,16 @@
                 }
                 fetch('/tasks/'+this.onFocusTaskHash, {
                     method: 'post',
-                    body: JSON.stringify(this.newTask)
+                    body: JSON.stringify(this.newTask),
+                    credentials: 'include',
                   })
                   .then(response => response.json())
                   .then(json=>{
+                    if(json.code == 1){
+                            window.location = "/app/login.html"
+                        }
                     this.showModal = false
-                    <!--console.log(JSON.stringify(json))-->
+                    
                   });
             },
             create: function(){
@@ -316,18 +328,25 @@
                 }
                 fetch('/tasks/add', {
                     method: 'post',
-                    body: JSON.stringify(this.newTask)
+                    body: JSON.stringify(this.newTask),
+                    credentials: 'include',
                   })
                   .then(response => response.json())
                   .then(json=>{
+                    if(json.code == 1){
+                            window.location = "/app/login.html"
+                        }
                     this.showModal = false
-                    <!--console.log(JSON.stringify(json))-->
+                    
                   });
-                fetch('/tasks')
+                fetch('/tasks',{credentials: 'include'})
                 .then(response => response.json())
                 .then(json=>{
-                    this.tasks = json
-                    <!--console.log(JSON.stringify(json))-->
+                    if(json.code == 1){
+                            window.location = "/app/login.html"
+                        }
+                    this.tasks = json.data
+                    
                 })
             },
             del: function(hash,name){
@@ -338,8 +357,11 @@
                       })
                       .then(response => response.json())
                       .then(json=>{
-                        this.tasks = json
-                        <!--console.log(JSON.stringify(json))-->
+                        if(json.code == 1){
+                            window.location = "/app/login.html"
+                        }
+                        this.tasks = json.data
+                        
                       });
                 } else {
                     txt = "You pressed Cancel!";
@@ -353,11 +375,13 @@
 
         },
         created(){
-            fetch('/tasks')
+            fetch('/tasks',{credentials: 'include'})
                 .then(response => response.json())
                 .then(json=>{
-                    this.tasks = json
-                    <!--console.log(JSON.stringify(json))-->
+                    if(json.code == 1){
+                        window.location = "/app/login.html"
+                    }
+                    this.tasks = json.data
                 })
         }
     })
