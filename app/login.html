@@ -65,6 +65,9 @@
         },
         methods: {
             submit: function(){
+                if(!this.un|!this.pw){
+                    return
+                }
                 fetch('/login', {
                     method: 'POST',
                     headers: {
