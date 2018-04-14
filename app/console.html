@@ -355,11 +355,12 @@
                 if (r == true) {
                     fetch('/tasks/'+hash, {
                         method: 'delete',
+                        credentials: 'include',
                       })
                       .then(response => response.json())
                       .then(json=>{
                         if(json.code == 1){
-                            window.location = "/app/login.html"
+                            // window.location = "/app/login.html"
                         }
                         this.tasks = json.data
                         

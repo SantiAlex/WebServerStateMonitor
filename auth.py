@@ -17,6 +17,7 @@ class Auth(object):
             self.on_line_users[hash] = time.time() + 300
             return hash
         else:
+            time.sleep(1)
             return None
 
     def check(self, hash):
