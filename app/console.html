@@ -257,6 +257,7 @@
                         this.onFocusTaskHash = hash
                         this.showModal = true
                         if(!this.newTask.hasOwnProperty('auth')){
+
                             this.newTask.auth = {
                                 "method": "post",
                                 "url": "",
@@ -264,6 +265,8 @@
                                     {"key":"","value":""}
                                 ]
                             }
+                        }else{
+                            this.newTaskNeedAuth='true'
                         }
                         
                     })

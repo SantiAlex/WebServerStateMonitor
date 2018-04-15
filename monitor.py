@@ -1,7 +1,7 @@
 import pickle
 import jsonschema
 import json
-import time, hashlib
+import time, hashlib, urllib
 from tornado import httpclient
 import tornado.ioloop
 
@@ -131,10 +131,10 @@ class Task(object):
             if self.auth:
                 self.auth_method = self.auth['method']
                 self.auth_url = self.auth['url']
-                self.auth_body = ''
+                self.auth_body = {}
                 if self.auth_method == 'post':
                     for i in self.auth['body']:
-                        self.auth_body += (i['key'] + '=' + i['value'] + '&')
+                        self.auth_body[i['key']] = i['value']
 
             self.items = []
             for i in self.structured_data.get('items'):
@@ -180,7 +180,7 @@ class Task(object):
         if not self.is_running:
             return ''
         for i in self.items:
-            if i.state >= 500 or i.state == 0:
+            if i.state >= 500:
                 return 'err'
         return 'ok'
 
@@ -194,6 +194,7 @@ class Task(object):
         print("==================do=====================")
 
         def on_response(response):
+            print(response.code)
             self.cookie = ';'.join(response.headers.get_list('Set-Cookie'))
             for j in self.items:
                 self.fetch(j)
@@ -201,7 +202,7 @@ class Task(object):
         if self.auth:
             if self.auth_method == 'post':
                 a = httpclient.HTTPRequest(self.auth_url, method=self.auth_method.upper(),
-                                           body=self.auth_body)
+                                           body=urllib.parse.urlencode(self.auth_body))
             elif self.auth_method == 'get':
                 a = httpclient.HTTPRequest(self.auth_url)
             httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
@@ -222,18 +223,21 @@ class Task(object):
         def on_response(response):
             if response.code:
                 i.state = response.code
-                if 500 <= response.code < 599:
+                #599超时
+                if 500 <= response.code <= 599:
                     i.stats += 1
             else:
                 i.state = 0
+
 
         if i.method == 'get':
 
             req = httpclient.HTTPRequest(i.url, headers={
                 "cookie": self.cookie})
-            #创建AsyncHTTPClient前先如此声明，可以避免DNS阻塞
+            # print(req.method)
+            # 创建AsyncHTTPClient前先如此声明，可以避免DNS阻塞
             httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-            #AsyncHTTPClient异步客户端，避免请求阻塞
+            # AsyncHTTPClient异步客户端，避免请求阻塞
             http_client = httpclient.AsyncHTTPClient()
 
             try:
@@ -244,12 +248,13 @@ class Task(object):
                 pass
 
         elif i.method == 'post':
-            body = ''
-            for l in i.body:
-                print(l)
-                body += (l['key'] + '=' + l['value'] + '&')
+            # body = ''
+            # for l in i.body:
+            #     print(l)
+            #     body += (l['key'] + '=' + l['value'] + '&')
             req = httpclient.HTTPRequest(i.url, headers={
-                "cookie": self.cookie}, method='post', body=body)
+                "cookie": self.cookie}, method='POST', body=urllib.parse.urlencode(i.body))
+            # print(req.body,req.method,req.url)
             http_client = httpclient.AsyncHTTPClient()
             try:
                 http_client.fetch(req, on_response)
@@ -264,10 +269,10 @@ class RequestUrl(object):
         self.stats = 0
         self.url = item['url']
         self.method = item['method']
-        self.body = []
+        self.body = {}
         if self.method == 'post':
             for i in item['body']:
-                self.body.append({'key': i['key'], 'value': i['value']})
+                self.body[i['key']] = i['value']
 
 
 class Monitor(object):

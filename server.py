@@ -134,13 +134,13 @@ class TaskHandler(BaseHandler):
 class ReportHandler(tornado.web.RequestHandler):
     def get(self, task):
         self.set_header("Content-Type", "application/json")
-        self.write(self.ok(monitor.monitor.report_whole(task)))
+        self.write(monitor.monitor.report_whole(task))
 
 
 class HasErrHandler(tornado.web.RequestHandler):
     def get(self, task):
         self.set_header("Content-Type", "application/json")
-        self.write(self.ok(monitor.monitor.report_has_err(task)))
+        self.write(monitor.monitor.report_has_err(task))
 
 
 class InfoHandler(BaseHandler):
