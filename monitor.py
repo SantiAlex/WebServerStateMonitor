@@ -180,7 +180,7 @@ class Task(object):
         if not self.is_running:
             return ''
         for i in self.items:
-            if i.state >= 500:
+            if 599 >= i.state >= 500:
                 return 'err'
         return 'ok'
 
@@ -194,7 +194,7 @@ class Task(object):
         print("==================do=====================")
 
         def on_response(response):
-            print(response.code)
+            print('login: ',response.code)
             self.cookie = ';'.join(response.headers.get_list('Set-Cookie'))
             for j in self.items:
                 self.fetch(j)
@@ -221,23 +221,22 @@ class Task(object):
     # @staticmethod
     def fetch(self, i):
         def on_response(response):
+            print(response.body)
             if response.code:
                 i.state = response.code
-                #599超时
                 if 500 <= response.code <= 599:
                     i.stats += 1
             else:
                 i.state = 0
-
-
+	
+        print(self.cookie)
         if i.method == 'get':
 
             req = httpclient.HTTPRequest(i.url, headers={
                 "cookie": self.cookie})
-            # print(req.method)
-            # 创建AsyncHTTPClient前先如此声明，可以避免DNS阻塞
+            #创建AsyncHTTPClient前先如此声明，可以避免DNS阻塞
             httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
-            # AsyncHTTPClient异步客户端，避免请求阻塞
+            #AsyncHTTPClient异步客户端，避免请求阻塞
             http_client = httpclient.AsyncHTTPClient()
 
             try:
@@ -248,13 +247,13 @@ class Task(object):
                 pass
 
         elif i.method == 'post':
-            # body = ''
-            # for l in i.body:
-            #     print(l)
-            #     body += (l['key'] + '=' + l['value'] + '&')
+            #body = ''
+            #for l in i.body:
+            #    print(l)
+            #    body += (l['key'] + '=' + l['value'] + '&')
+            print(i.body)	
             req = httpclient.HTTPRequest(i.url, headers={
                 "cookie": self.cookie}, method='POST', body=urllib.parse.urlencode(i.body))
-            # print(req.body,req.method,req.url)
             http_client = httpclient.AsyncHTTPClient()
             try:
                 http_client.fetch(req, on_response)
